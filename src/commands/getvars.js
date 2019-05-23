@@ -99,12 +99,20 @@ function getAttributes (odm, flags) {
         const mdv = odm.study.metaDataVersion;
         Object.values(mdv.itemGroups).forEach(itemGroup => {
             let dsAttributes = [];
+            let codelist;
             itemGroup.itemRefOrder.forEach(itemRefOid => {
                 let itemRef = itemGroup.itemRefs[itemRefOid];
                 let itemDef = mdv.itemDefs[itemRef.itemOid];
                 let origin;
                 if (itemDef.origins.length > 0) {
                     origin = getDescription(itemDef.origins[0]);
+                }
+                if (itemDef.codeListOid) {
+                    codelist = mdv.codeLists[itemDef.codeListOid].name;
+                }
+                let keySequence;
+                if (itemGroup.keyOrder.includes(itemRefOid)) {
+                    keySequence = itemGroup.keyOrder.indexOf(itemRefOid) + 1;
                 }
                 if (flags.extended) {
                     // Show extended attributes
@@ -116,8 +124,8 @@ function getAttributes (odm, flags) {
                         dataType: itemDef.dataType,
                         origin,
                         mandatory: itemRef.mandatory,
+                        keySequence,
                         role: itemRef.role,
-                        roleCodeListOid: itemRef.roleCodeListOid,
                         sasFieldName: itemDef.fieldName,
                         displayFormat: itemDef.displayFormat,
                     });
@@ -130,6 +138,8 @@ function getAttributes (odm, flags) {
                         length: itemDef.length,
                         dataType: itemDef.dataType,
                         displayFormat: itemDef.displayFormat,
+                        codelist,
+                        keySequence,
                     });
                 }
             });

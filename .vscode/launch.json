@@ -7,7 +7,8 @@
       "name": "Launch Program",
       "program": "${workspaceFolder}/bin/run",
       "args": [
-        "getattrs",
+        "getdatasets",
+        "--filter=pe",        
         "data/define.sdtm.xml"
       ]
     }
