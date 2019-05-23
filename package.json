@@ -42,7 +42,7 @@
   "keywords": [
     "define.xml",
     "cdisc",
-    "odm",
+    "odm"
   ],
   "license": "MIT",
   "main": "src/index.js",
