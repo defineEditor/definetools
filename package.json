@@ -1,0 +1,64 @@
+{
+  "name": "definetools",
+  "description": "CLI tools for Define-XML 2.0 ",
+  "version": "0.1",
+  "author": "Dmitry Kolosov",
+  "bin": {
+    "definetools": "./bin/run"
+  },
+  "bugs": "https://github.com/defineEditor/definetools/issues",
+  "dependencies": {
+    "@oclif/command": "^1",
+    "@oclif/config": "^1",
+    "@oclif/plugin-help": "^2",
+    "json2csv": "^4.5.1",
+    "xml2js": "^0.4.19"
+  },
+  "devDependencies": {
+    "@oclif/dev-cli": "^1",
+    "@oclif/test": "^1",
+    "chai": "^4",
+    "eslint": "^5.13",
+    "eslint-config-oclif": "^3.1",
+    "eslint-config-standard": "^12.0.0",
+    "eslint-plugin-import": "^2.17.2",
+    "eslint-plugin-node": "^9.0.1",
+    "eslint-plugin-promise": "^4.1.1",
+    "eslint-plugin-standard": "^4.0.0",
+    "globby": "^8",
+    "mocha": "^5",
+    "nyc": "^13"
+  },
+  "engines": {
+    "node": ">=8.0.0"
+  },
+  "files": [
+    "/bin",
+    "/npm-shrinkwrap.json",
+    "/oclif.manifest.json",
+    "/src"
+  ],
+  "homepage": "https://github.com/defineEditor/definetools",
+  "keywords": [
+    "define.xml",
+    "cdisc",
+    "odm",
+  ],
+  "license": "MIT",
+  "main": "src/index.js",
+  "oclif": {
+    "commands": "./src/commands",
+    "bin": "definetools",
+    "plugins": [
+      "@oclif/plugin-help"
+    ]
+  },
+  "repository": "defineEditor/definetools",
+  "scripts": {
+    "postpack": "rm -f oclif.manifest.json",
+    "posttest": "eslint .",
+    "prepack": "oclif-dev manifest && oclif-dev readme",
+    "test": "nyc mocha --forbid-only \"test/**/*.test.js\"",
+    "version": "oclif-dev readme && git add README.md"
+  }
+}
