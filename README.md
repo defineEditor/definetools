@@ -1,7 +1,12 @@
 definetools
 ===========
-CLI tools for Define-XML 2.0. For interactive review and editing of Define-XML files, see [Visual Define-XML Editor](defineeditor.com).
+CLI tools for Define-XML 2.0. For interactive review and editing of Define-XML files see [Visual Define-XML Editor](https://defineeditor.com).
 
+# Installation
+To use definetools, you need to have [https://nodejs.org/en/download/](Node.JS) installed. Once installed, run
+```
+npm install -g definetools
+```
 # Usage
 ```
 definetools [command] [flags] [arguments]
