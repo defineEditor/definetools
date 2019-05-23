@@ -12,17 +12,22 @@ npm install -g definetools
 definetools [command] [flags] [arguments]
 ```
 # Commands
-## getattrs
-Extract variable attributes from a Define-XML file. See **definetools getattrs --help** for more details.
+## getvars
+Extract variable attributes from a Define-XML file. See **definetools getvars --help** for more details.
 ```
-definetools getattrs [flags] xmlFile [output file]
+definetools getvars [flags] xmlFile [output file]
+```
+## getdatasets
+Extract daaset attributes from a Define-XML file. See **definetools getdatasets --help** for more details.
+```
+definetools getdatasets [flags] xmlFile [output file]
 ```
 # Examples
 Extract an extended list of attributes into attrs.csv file
 ```
-definetools getattrs -e define.xml
+definetools getvars -e define.xml
 ```
 Print basic attributes to STDOUT
 ```
-definetools getattrs --stdout define.xml
+definetools getvars --stdout define.xml
 ```
