@@ -60,7 +60,7 @@ getAttrs.args = [
 getAttrs.flags = {
     separate: flags.boolean({ char: 's', description: 'Create a separate CSV file for each dataset' }),
     verbose: flags.boolean({ char: 'v', description: 'Show additional information during the execution' }),
-    all: flags.boolean({ char: 'a', description: 'Show all attributes' }),
+    extended: flags.boolean({ char: 'e', description: 'Show extended attributes' }),
     stdout: flags.boolean({ description: 'Print results to STDOUT' }),
 };
 
@@ -77,8 +77,8 @@ function getAttributes (odm, flags) {
                 if (itemDef.origins.length > 0) {
                     origin = getDescription(itemDef.origins[0]);
                 }
-                if (flags.all) {
-                    // Show all attributes
+                if (flags.extended) {
+                    // Show extended attributes
                     dsAttributes.push({
                         dataset: itemGroup.name,
                         name: itemDef.name,
