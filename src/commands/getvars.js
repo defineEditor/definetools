@@ -9,12 +9,9 @@ const json2csv = require('json2csv');
 
 const writeFile = promisify(fs.writeFile);
 
-class getAttrs extends Command {
+class getVars extends Command {
     async run () {
-        const { flags, argv } = this.parse(getAttrs);
-        if (argv.length === 0) {
-            this.log('You need to specify Define-XML 2.0 file.');
-        }
+        const { flags, argv } = this.parse(getVars);
 
         // Paths
         const currentFolder = process.cwd();
@@ -78,17 +75,17 @@ class getAttrs extends Command {
     }
 }
 
-getAttrs.description = `Extract variable attributes from a Define-XML file.
+getVars.description = `Extract variable attributes from a Define-XML file.
 A file created using Define-XML 2.0 standard is expected as an input.
 If the output file is not specified, attrs.csv will be used.
 `;
 
-getAttrs.args = [
-    { name: 'Define-XML 2.0 file' },
+getVars.args = [
+    { name: 'Define-XML 2.0 file', required: true },
     { name: 'Output file' },
 ];
 
-getAttrs.flags = {
+getVars.flags = {
     separate: flags.boolean({ char: 's', description: 'Create a separate CSV file for each dataset' }),
     verbose: flags.boolean({ char: 'v', description: 'Show additional information during the execution' }),
     extended: flags.boolean({ char: 'e', description: 'Show extended attributes' }),
@@ -102,12 +99,20 @@ function getAttributes (odm, flags) {
         const mdv = odm.study.metaDataVersion;
         Object.values(mdv.itemGroups).forEach(itemGroup => {
             let dsAttributes = [];
+            let codelist;
             itemGroup.itemRefOrder.forEach(itemRefOid => {
                 let itemRef = itemGroup.itemRefs[itemRefOid];
                 let itemDef = mdv.itemDefs[itemRef.itemOid];
                 let origin;
                 if (itemDef.origins.length > 0) {
                     origin = getDescription(itemDef.origins[0]);
+                }
+                if (itemDef.codeListOid) {
+                    codelist = mdv.codeLists[itemDef.codeListOid].name;
+                }
+                let keySequence;
+                if (itemGroup.keyOrder.includes(itemRefOid)) {
+                    keySequence = itemGroup.keyOrder.indexOf(itemRefOid) + 1;
                 }
                 if (flags.extended) {
                     // Show extended attributes
@@ -119,8 +124,8 @@ function getAttributes (odm, flags) {
                         dataType: itemDef.dataType,
                         origin,
                         mandatory: itemRef.mandatory,
+                        keySequence,
                         role: itemRef.role,
-                        roleCodeListOid: itemRef.roleCodeListOid,
                         sasFieldName: itemDef.fieldName,
                         displayFormat: itemDef.displayFormat,
                     });
@@ -133,6 +138,8 @@ function getAttributes (odm, flags) {
                         length: itemDef.length,
                         dataType: itemDef.dataType,
                         displayFormat: itemDef.displayFormat,
+                        codelist,
+                        keySequence,
                     });
                 }
             });
@@ -142,4 +149,4 @@ function getAttributes (odm, flags) {
     return result;
 }
 
-module.exports = getAttrs;
+module.exports = getVars;
