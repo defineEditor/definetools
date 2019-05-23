@@ -92,7 +92,7 @@ getAttrs.flags = {
     separate: flags.boolean({ char: 's', description: 'Create a separate CSV file for each dataset' }),
     verbose: flags.boolean({ char: 'v', description: 'Show additional information during the execution' }),
     extended: flags.boolean({ char: 'e', description: 'Show extended attributes' }),
-    filter: flags.string({ char: 'e', description: "Regex used to specify datasets to output. Use --filter='^(ae|cm|lb)$' to select AE, CM, and LB datasets." }),
+    filter: flags.string({ description: "Regex used to specify datasets to output. Use --filter='^(ae|cm|lb)$' to select AE, CM, and LB datasets." }),
     stdout: flags.boolean({ description: 'Print results to STDOUT' }),
 };
 
