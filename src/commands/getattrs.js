@@ -12,13 +12,44 @@ const writeFile = promisify(fs.writeFile);
 class getAttrs extends Command {
     async run () {
         const { flags, argv } = this.parse(getAttrs);
+        if (argv.length === 0) {
+            this.log('You need to specify Define-XML 2.0 file.');
+        }
+
+        // Paths
         const currentFolder = process.cwd();
-        let xmlData = await readXml(path.resolve(currentFolder, argv[0]));
-        let outputFile = argv.length > 1 ? argv[1] : 'attrs.csv';
+        let inputFile = path.resolve(currentFolder, argv[0]);
+        let outputFile = path.resolve(currentFolder, argv.length > 1 ? argv[1] : 'attrs.csv');
+
+        // Read-in and parse XML
+        let xmlData = await readXml(inputFile);
         let odm = parseDefine(xmlData);
         let attributes = getAttributes(odm, flags);
+
+        // Handle flags
         if (flags.verbose) {
             this.log(`Found metadata for ${Object.keys(attributes).length} datasets.`);
+        }
+
+        if (flags.filter) {
+            let filter = flags.filter;
+            if (/^('.*'|".*")$/.test(filter)) {
+                filter.replace(/^(['"])(.*)\1$/, '$2');
+            }
+            let regexFilter;
+            try {
+                regexFilter = new RegExp(filter, 'i');
+            } catch (error) {
+                this.log(`Invalid filter value. ${error}`);
+            }
+
+            Object.keys(attributes).forEach(itemGroupOid => {
+                let itemGroupAttrs = attributes[itemGroupOid];
+                let datasetName = itemGroupAttrs[0].dataset.toLowerCase();
+                if (!regexFilter.test(datasetName)) {
+                    delete attributes[itemGroupOid];
+                }
+            });
         }
         if (flags.stdout) {
             // Unite into one array
@@ -42,7 +73,7 @@ class getAttrs extends Command {
             Object.keys(attributes).forEach(itemGroupOid => {
                 unitedAttrs = unitedAttrs.concat(attributes[itemGroupOid]);
             });
-            await writeFile(path.resolve(currentFolder, outputFile), json2csv.parse(unitedAttrs));
+            await writeFile(outputFile, json2csv.parse(unitedAttrs));
         }
     }
 }
@@ -61,6 +92,7 @@ getAttrs.flags = {
     separate: flags.boolean({ char: 's', description: 'Create a separate CSV file for each dataset' }),
     verbose: flags.boolean({ char: 'v', description: 'Show additional information during the execution' }),
     extended: flags.boolean({ char: 'e', description: 'Show extended attributes' }),
+    filter: flags.string({ char: 'e', description: "Regex used to specify datasets to output. Use --filter='^(ae|cm|lb)$' to select AE, CM, and LB datasets." }),
     stdout: flags.boolean({ description: 'Print results to STDOUT' }),
 };
 

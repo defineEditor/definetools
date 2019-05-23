@@ -639,10 +639,6 @@ function parseMetaDataVersion (metadataRaw) {
         mdv.supplementalDoc = parseDocumentCollection(metadataRaw['supplementalDoc']);
     }
 
-    if (metadataRaw.hasOwnProperty('analysisResultDisplays')) {
-        mdv.analysisResultDisplays = parseArm(metadataRaw['analysisResultDisplays']);
-    }
-
     mdv.leafs = parseLeafs(metadataRaw['leaf'], mdv);
     mdv.valueLists = parseValueLists(metadataRaw['valueListDef'], mdv);
     mdv.whereClauses = parseWhereClauses(metadataRaw['whereClauseDef'], mdv);
