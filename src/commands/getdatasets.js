@@ -16,7 +16,7 @@ class getDatasets extends Command {
         // Paths
         const currentFolder = process.cwd();
         let inputFile = path.resolve(currentFolder, argv[0]);
-        let outputFile = path.resolve(currentFolder, argv.length > 1 ? argv[1] : 'attrs.csv');
+        let outputFile = path.resolve(currentFolder, argv.length > 1 ? argv[1] : ('datasets.' + flags.format));
 
         // Read-in and parse XML
         let xmlData = await readXml(inputFile);
@@ -49,17 +49,24 @@ class getDatasets extends Command {
             attributes = attributes.filter(attr => (attr !== 'toDelete'));
         }
         if (flags.stdout) {
-            // Unite into one array
-            this.log(json2csv.parse(attributes));
+            if (flags.format === 'csv') {
+                this.log(json2csv.parse(attributes));
+            } else {
+                this.log(JSON.stringify(attributes, null, 2));
+            }
         } else {
-            await writeFile(outputFile, json2csv.parse(attributes));
+            if (flags.format === 'csv') {
+                await writeFile(outputFile, json2csv.parse(attributes));
+            } else {
+                await writeFile(outputFile, JSON.stringify(attributes, null, 2));
+            }
         }
     }
 }
 
 getDatasets.description = `Extract dataset attributes from a Define-XML file.
 A file created using Define-XML 2.0 standard is expected as an input.
-If the output file is not specified, attrs.csv will be used.
+If the output file is not specified, datasets.csv will be used.
 `;
 
 getDatasets.args = [
@@ -69,9 +76,10 @@ getDatasets.args = [
 
 getDatasets.flags = {
     verbose: flags.boolean({ char: 'v', description: 'Show additional information during the execution' }),
-    extended: flags.boolean({ char: 'e', description: 'Show extended attributes' }),
+    extended: flags.boolean({ char: 'e', description: 'Show an extended list of attributes' }),
     filter: flags.string({ description: "Regex used to specify datasets to output. Use --filter='^(ae|cm|lb)$' to select AE, CM, and LB datasets." }),
     stdout: flags.boolean({ description: 'Print results to STDOUT' }),
+    format: flags.string({ char: 'f', description: 'Output format', options: ['csv', 'json'], default: 'csv' }),
 };
 
 function getAttributes (odm, flags) {

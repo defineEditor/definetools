@@ -1,6 +1,8 @@
 /data
+*.csv
 *-debug.log
 *-error.log
+/.vscode
 /.nyc_output
 /dist
 /package-lock.json
