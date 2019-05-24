@@ -16,7 +16,7 @@ class getVars extends Command {
         // Paths
         const currentFolder = process.cwd();
         let inputFile = path.resolve(currentFolder, argv[0]);
-        let outputFile = path.resolve(currentFolder, argv.length > 1 ? argv[1] : 'attrs.csv');
+        let outputFile = path.resolve(currentFolder, argv.length > 1 ? argv[1] : ('vars.' + flags.format));
 
         // Read-in and parse XML
         let xmlData = await readXml(inputFile);
@@ -54,7 +54,11 @@ class getVars extends Command {
             Object.keys(attributes).forEach(itemGroupOid => {
                 unitedAttrs = unitedAttrs.concat(attributes[itemGroupOid]);
             });
-            this.log(json2csv.parse(unitedAttrs));
+            if (flags.format === 'csv') {
+                this.log(json2csv.parse(unitedAttrs));
+            } else {
+                this.log(JSON.stringify(unitedAttrs, null, 2));
+            }
 
             return;
         }
@@ -62,7 +66,11 @@ class getVars extends Command {
             await Promise.all(Object.keys(attributes).map(async (itemGroupOid) => {
                 let itemGroupAttrs = attributes[itemGroupOid];
                 let datasetName = itemGroupAttrs[0].dataset.toLowerCase();
-                await writeFile(path.resolve(currentFolder, datasetName + '.csv'), json2csv.parse(itemGroupAttrs));
+                if (flags.format === 'csv') {
+                    await writeFile(path.resolve(currentFolder, datasetName + '.' + flags.format), json2csv.parse(itemGroupAttrs));
+                } else {
+                    await writeFile(path.resolve(currentFolder, datasetName + '.' + flags.format), JSON.stringify(itemGroupAttrs, null, 2));
+                }
             }));
         } else {
             // Unite into one array
@@ -70,14 +78,18 @@ class getVars extends Command {
             Object.keys(attributes).forEach(itemGroupOid => {
                 unitedAttrs = unitedAttrs.concat(attributes[itemGroupOid]);
             });
-            await writeFile(outputFile, json2csv.parse(unitedAttrs));
+            if (flags.format === 'csv') {
+                await writeFile(outputFile, json2csv.parse(unitedAttrs));
+            } else {
+                await writeFile(outputFile, JSON.stringify(unitedAttrs, null, 2));
+            }
         }
     }
 }
 
 getVars.description = `Extract variable attributes from a Define-XML file.
 A file created using Define-XML 2.0 standard is expected as an input.
-If the output file is not specified, attrs.csv will be used.
+If the output file is not specified, vars.csv will be used.
 `;
 
 getVars.args = [
@@ -86,11 +98,12 @@ getVars.args = [
 ];
 
 getVars.flags = {
-    separate: flags.boolean({ char: 's', description: 'Create a separate CSV file for each dataset' }),
+    separate: flags.boolean({ char: 's', description: 'Create a separate file for each dataset' }),
     verbose: flags.boolean({ char: 'v', description: 'Show additional information during the execution' }),
-    extended: flags.boolean({ char: 'e', description: 'Show extended attributes' }),
+    extended: flags.boolean({ char: 'e', description: 'Show an extended list of attributes' }),
     filter: flags.string({ description: "Regex used to specify datasets to output. Use --filter='^(ae|cm|lb)$' to select AE, CM, and LB datasets." }),
-    stdout: flags.boolean({ description: 'Print results to STDOUT' }),
+    stdout: flags.boolean({ description: 'Print results to STDOUT', exclusive: ['separate'] }),
+    format: flags.string({ char: 'f', description: 'Output format', options: ['csv', 'json'], default: 'csv' }),
 };
 
 function getAttributes (odm, flags) {
