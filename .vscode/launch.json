@@ -7,9 +7,10 @@
       "name": "Launch Program",
       "program": "${workspaceFolder}/bin/run",
       "args": [
-        "getdatasets",
-        "--filter=pe",        
-        "data/define.sdtm.xml"
+        "getvars",
+        "--stdout",        
+        "-f=json"
+        "data/define.sdtm.invalid.xml"
       ]
     }
   ]
