@@ -72,9 +72,9 @@ async function validate (pathToFile, flags) {
 
     let pathToSchema;
     if (flags.v21) {
-        pathToSchema = path.join(path.resolve(), 'static/schemas/2.1/cdisc-arm-1.0/arm1-0-0.xsd');
+        pathToSchema = path.join(path.dirname(require.main.filename), '../static/schemas/2.1/cdisc-arm-1.0/arm1-0-0.xsd');
     } else {
-        pathToSchema = path.join(path.resolve(), 'static/schemas/2.0/cdisc-arm-1.0/arm1-0-0.xsd');
+        pathToSchema = path.join(path.dirname(require.main.filename), '../static/schemas/2.0/cdisc-arm-1.0/arm1-0-0.xsd');
     }
     let schemaData = await readFile(pathToSchema);
     let schemaParsed = libxmljs.parseXml(schemaData);
