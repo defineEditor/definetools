@@ -3,6 +3,18 @@
   "description": "CLI tools for Define-XML 2.0 ",
   "version": "0.1.4",
   "author": "Dmitry Kolosov",
+  "contributors": [
+    {
+      "name": "Sergei Krivtcov",
+      "email": "1000eyed@gmail.com",
+      "url": ""
+    },
+    {
+      "name": "Dmitry Kolosov",
+      "email": "dmitry.m.kolosov@gmail.com",
+      "url": ""
+    }
+  ],
   "bin": {
     "definetools": "./bin/run"
   },
@@ -37,7 +49,8 @@
     "/bin",
     "/npm-shrinkwrap.json",
     "/oclif.manifest.json",
-    "/src"
+    "/src",
+    "/static"
   ],
   "homepage": "https://github.com/defineEditor/definetools",
   "keywords": [
