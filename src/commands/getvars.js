@@ -24,10 +24,6 @@ class getVars extends Command {
         let attributes = getAttributes(odm, flags);
 
         // Handle flags
-        if (flags.verbose) {
-            this.log(`Found metadata for ${Object.keys(attributes).length} datasets.`);
-        }
-
         if (flags.filter) {
             let filter = flags.filter;
             if (/^('.*'|".*")$/.test(filter)) {
@@ -37,7 +33,7 @@ class getVars extends Command {
             try {
                 regexFilter = new RegExp(filter, 'i');
             } catch (error) {
-                this.log(`Invalid filter value. ${error}`);
+                this.error(`Invalid filter value. ${error}`);
             }
 
             Object.keys(attributes).forEach(itemGroupOid => {
@@ -48,6 +44,16 @@ class getVars extends Command {
                 }
             });
         }
+
+        if (flags.verbose) {
+            this.log(`Found metadata for ${Object.keys(attributes).length} datasets.`);
+        }
+
+        // Nothing to report
+        if (Object.keys(attributes).length === 0) {
+            return;
+        }
+
         if (flags.stdout) {
             // Unite into one array
             let unitedAttrs = [];
@@ -116,9 +122,21 @@ function getAttributes (odm, flags) {
             itemGroup.itemRefOrder.forEach(itemRefOid => {
                 let itemRef = itemGroup.itemRefs[itemRefOid];
                 let itemDef = mdv.itemDefs[itemRef.itemOid];
+                let comment;
+                if (itemDef.commentOid) {
+                    comment = getDescription(mdv.comments[itemDef.commentOid]);
+                }
+                let method;
+                if (itemRef.methodOid) {
+                    method = getDescription(mdv.methods[itemRef.methodOid]);
+                }
                 let origin;
+                let originDescription;
                 if (itemDef.origins.length > 0) {
-                    origin = getDescription(itemDef.origins[0]);
+                    origin = itemDef.origins[0].type;
+                    if (itemDef.origins[0].descriptions.length > 0) {
+                        originDescription = getDescription(itemDef.origins[0]);
+                    }
                 }
                 if (itemDef.codeListOid) {
                     codelist = mdv.codeLists[itemDef.codeListOid].name;
@@ -136,6 +154,9 @@ function getAttributes (odm, flags) {
                         length: itemDef.length,
                         dataType: itemDef.dataType,
                         origin,
+                        originDescription,
+                        method,
+                        comment,
                         mandatory: itemRef.mandatory,
                         keySequence,
                         role: itemRef.role,

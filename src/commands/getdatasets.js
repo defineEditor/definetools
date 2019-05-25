@@ -24,10 +24,6 @@ class getDatasets extends Command {
         let attributes = getAttributes(odm, flags);
 
         // Handle flags
-        if (flags.verbose) {
-            this.log(`Found metadata for ${attributes.length} datasets.`);
-        }
-
         if (flags.filter) {
             let filter = flags.filter;
             if (/^('.*'|".*")$/.test(filter)) {
@@ -37,7 +33,7 @@ class getDatasets extends Command {
             try {
                 regexFilter = new RegExp(filter, 'i');
             } catch (error) {
-                this.log(`Invalid filter value. ${error}`);
+                this.error(`Invalid filter value. ${error}`);
             }
 
             attributes.forEach((attr, index) => {
@@ -48,6 +44,16 @@ class getDatasets extends Command {
             });
             attributes = attributes.filter(attr => (attr !== 'toDelete'));
         }
+
+        if (flags.verbose) {
+            this.log(`Found metadata for ${attributes.length} datasets.`);
+        }
+
+        // Nothing to report
+        if (Object.keys(attributes).length === 0) {
+            return;
+        }
+
         if (flags.stdout) {
             if (flags.format === 'csv') {
                 this.log(json2csv.parse(attributes));
@@ -87,8 +93,12 @@ function getAttributes (odm, flags) {
     if (odm && odm.study && odm.study.metaDataVersion) {
         const mdv = odm.study.metaDataVersion;
         Object.values(mdv.itemGroups).forEach(itemGroup => {
-            const { name, domain, datasetName, repeating, isReferenceData, purpose, structure, datasetClass } = itemGroup;
+            const { name, domain, datasetName, repeating, isReferenceData, purpose, structure, datasetClass, commentOid } = itemGroup;
             if (flags.extended) {
+                let comment;
+                if (commentOid) {
+                    comment = getDescription(mdv.comments[commentOid]);
+                }
                 // Show extended attributes
                 result.push({
                     name,
@@ -100,6 +110,7 @@ function getAttributes (odm, flags) {
                     purpose,
                     structure,
                     datasetClass: datasetClass.name,
+                    comment,
                 });
             } else {
                 // Show only basic attributes
