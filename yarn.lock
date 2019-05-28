@@ -1654,11 +1654,6 @@ he@1.1.1:
   resolved "https://registry.yarnpkg.com/he/-/he-1.1.1.tgz#93410fd21b009735151f8868c2f271f3427e23fd"
   integrity sha1-k0EP0hsAlzUVH4howvJx80J+I/0=
 
-he@^1.2.0:
-  version "1.2.0"
-  resolved "https://registry.yarnpkg.com/he/-/he-1.2.0.tgz#84ae65fa7eafb165fddb61566ae14baf05664f0f"
-  integrity sha512-F/1DnUGPopORZi0ni+CvrCgHQ5FyEAHRLSApuYWMmrbSwoN2Mn/7k+Gl38gJnR7yyDZk6WLXwiGod1JOWNDKGw==
-
 hosted-git-info@^2.1.4:
   version "2.7.1"
   resolved "https://registry.yarnpkg.com/hosted-git-info/-/hosted-git-info-2.7.1.tgz#97f236977bd6e125408930ff6de3eec6281ec047"
@@ -3692,13 +3687,6 @@ xmlbuilder@~9.0.1:
   version "9.0.7"
   resolved "https://registry.yarnpkg.com/xmlbuilder/-/xmlbuilder-9.0.7.tgz#132ee63d2ec5565c557e20f4c22df9aca686b10d"
   integrity sha1-Ey7mPS7FVlxVfiD0wi35rKaGsQ0=
-
-xslt-processor@^0.11.5:
-  version "0.11.5"
-  resolved "https://registry.yarnpkg.com/xslt-processor/-/xslt-processor-0.11.5.tgz#efc6f087444a603243f792103d995e1ca6cb9283"
-  integrity sha512-1sqWl7cfLLPpGi5cieiIlqqpQU3f44N7gfFzCqvi0Om53vxmwZIp877x5+H6HoxaL8cr1xGG3OWRR2FtOC7zTg==
-  dependencies:
-    he "^1.2.0"
 
 xtend@^4.0.0:
   version "4.0.1"
