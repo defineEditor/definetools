@@ -9,9 +9,9 @@ const json2csv = require('json2csv');
 
 const writeFile = promisify(fs.writeFile);
 
-class getDatasets extends Command {
+class GetDatasets extends Command {
     async run () {
-        const { flags, argv } = this.parse(getDatasets);
+        const { flags, argv } = this.parse(GetDatasets);
 
         // Paths
         const currentFolder = process.cwd();
@@ -21,7 +21,7 @@ class getDatasets extends Command {
         // Read-in and parse XML
         let xmlData = await readXml(inputFile);
         let odm = parseDefine(xmlData);
-        let attributes = getAttributes(odm, flags);
+        let attributes = getDatasetData(odm, flags);
 
         // Handle flags
         if (flags.filter) {
@@ -46,7 +46,12 @@ class getDatasets extends Command {
         }
 
         if (flags.verbose) {
-            this.log(`Found metadata for ${attributes.length} datasets.`);
+            let numItems = attributes.length;
+            let message = `Found ${numItems} items.` + (numItems === 0
+                ? (flags.stdout ? `` : ` Nothing to print to ${outputFile}.`)
+                : (flags.stdout ? ` Printing to STDOUT.` : ` Printing to ${outputFile}.`)
+            );
+            this.log(message);
         }
 
         // Nothing to report
@@ -70,17 +75,17 @@ class getDatasets extends Command {
     }
 }
 
-getDatasets.description = `Extract dataset attributes from a Define-XML file.
+GetDatasets.description = `extract dataset attributes from a Define-XML file.
 A file created using Define-XML 2.0 standard is expected as an input.
 If the output file is not specified, datasets.csv will be used.
 `;
 
-getDatasets.args = [
+GetDatasets.args = [
     { name: 'Define-XML 2.0 file', required: true },
     { name: 'Output file' },
 ];
 
-getDatasets.flags = {
+GetDatasets.flags = {
     verbose: flags.boolean({ char: 'v', description: 'Show additional information during the execution' }),
     extended: flags.boolean({ char: 'e', description: 'Show an extended list of attributes' }),
     filter: flags.string({ description: "Regex used to specify datasets to output. Use --filter='^(ae|cm|lb)$' to select AE, CM, and LB datasets." }),
@@ -88,7 +93,7 @@ getDatasets.flags = {
     format: flags.string({ char: 'f', description: 'Output format', options: ['csv', 'json'], default: 'csv' }),
 };
 
-function getAttributes (odm, flags) {
+function getDatasetData (odm, flags) {
     let result = [];
     if (odm && odm.study && odm.study.metaDataVersion) {
         const mdv = odm.study.metaDataVersion;
@@ -125,4 +130,4 @@ function getAttributes (odm, flags) {
     return result;
 }
 
-module.exports = getDatasets;
+module.exports = GetDatasets;
