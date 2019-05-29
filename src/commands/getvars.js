@@ -9,9 +9,9 @@ const json2csv = require('json2csv');
 
 const writeFile = promisify(fs.writeFile);
 
-class getVars extends Command {
+class GetVars extends Command {
     async run () {
-        const { flags, argv } = this.parse(getVars);
+        const { flags, argv } = this.parse(GetVars);
 
         // Paths
         const currentFolder = process.cwd();
@@ -21,7 +21,7 @@ class getVars extends Command {
         // Read-in and parse XML
         let xmlData = await readXml(inputFile);
         let odm = parseDefine(xmlData);
-        let attributes = getAttributes(odm, flags);
+        let attributes = getVariableData(odm, flags);
 
         // Handle flags
         if (flags.filter) {
@@ -46,7 +46,12 @@ class getVars extends Command {
         }
 
         if (flags.verbose) {
-            this.log(`Found metadata for ${Object.keys(attributes).length} datasets.`);
+            let numItems = Object.values(attributes).reduce((acc, dataset) => (acc + dataset.length), 0);
+            let message = `Found ${numItems} items.` + (numItems === 0
+                ? (flags.stdout ? `` : ` Nothing to print to ${outputFile}.`)
+                : (flags.stdout ? ` Printing to STDOUT.` : ` Printing to ${outputFile}.`)
+            );
+            this.log(message);
         }
 
         // Nothing to report
@@ -93,17 +98,17 @@ class getVars extends Command {
     }
 }
 
-getVars.description = `Extract variable attributes from a Define-XML file.
+GetVars.description = `extract variable attributes from a Define-XML file.
 A file created using Define-XML 2.0 standard is expected as an input.
 If the output file is not specified, vars.csv will be used.
 `;
 
-getVars.args = [
+GetVars.args = [
     { name: 'Define-XML 2.0 file', required: true },
     { name: 'Output file' },
 ];
 
-getVars.flags = {
+GetVars.flags = {
     separate: flags.boolean({ char: 's', description: 'Create a separate file for each dataset' }),
     verbose: flags.boolean({ char: 'v', description: 'Show additional information during the execution' }),
     extended: flags.boolean({ char: 'e', description: 'Show an extended list of attributes' }),
@@ -112,7 +117,7 @@ getVars.flags = {
     format: flags.string({ char: 'f', description: 'Output format', options: ['csv', 'json'], default: 'csv' }),
 };
 
-function getAttributes (odm, flags) {
+function getVariableData (odm, flags) {
     let result = {};
     if (odm && odm.study && odm.study.metaDataVersion) {
         const mdv = odm.study.metaDataVersion;
@@ -183,4 +188,4 @@ function getAttributes (odm, flags) {
     return result;
 }
 
-module.exports = getVars;
+module.exports = GetVars;

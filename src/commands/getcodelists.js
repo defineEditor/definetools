@@ -1,5 +1,4 @@
 const { Command, flags } = require('@oclif/command');
-const { getDescription } = require('../utils/defineStructureUtils.js');
 const parseDefine = require('../parsers/parseDefine.js');
 const readXml = require('../utils/readXml.js');
 const path = require('path');
@@ -9,9 +8,9 @@ const json2csv = require('json2csv');
 
 const writeFile = promisify(fs.writeFile);
 
-class getCodeLists extends Command {
+class GetCodeLists extends Command {
     async run () {
-        const { flags, argv } = this.parse(getCodeLists);
+        const { flags, argv } = this.parse(GetCodeLists);
 
         // Paths
         const currentFolder = process.cwd();
@@ -21,7 +20,7 @@ class getCodeLists extends Command {
         // Read-in and parse XML
         let xmlData = await readXml(inputFile);
         let odm = parseDefine(xmlData);
-        let data = fetchData(odm, flags);
+        let attributes = getCodeListData(odm, flags);
 
         // Handle filter
         if (flags.filter) {
@@ -36,48 +35,49 @@ class getCodeLists extends Command {
                 this.log(`Invalid filter value. ${error}`);
             }
 
-            data = data.filter(item => regexFilter.test(item.name));
+            attributes = attributes.filter(item => regexFilter.test(item.name));
         }
 
         // put log message
         if (flags.verbose) {
-            let message = `Found ${data.length} codelists.` + (data.length === 0
-                ? (flags.stdout ? `` : ` ${outputFile} was not updated.`)
-                : (flags.stdout ? ` Here they are:` : ` The codelists were written to ${outputFile}`)
+            let numItems = Object.values(attributes).reduce((acc, items) => (acc + items.length), 0);
+            let message = `Found ${numItems} items.` + (numItems === 0
+                ? (flags.stdout ? `` : ` Nothing to print to ${outputFile}.`)
+                : (flags.stdout ? ` Printing to STDOUT.` : ` Printing to ${outputFile}.`)
             );
             this.log(message);
         }
 
         // report
-        if (data.length > 0) {
+        if (attributes.length > 0) {
             if (flags.stdout) {
                 if (flags.format === 'csv') {
-                    this.log(json2csv.parse(data));
+                    this.log(json2csv.parse(attributes));
                 } else {
-                    this.log(JSON.stringify(data, null, 2));
+                    this.log(JSON.stringify(attributes, null, 2));
                 }
             } else {
                 if (flags.format === 'csv') {
-                    await writeFile(outputFile, json2csv.parse(data));
+                    await writeFile(outputFile, json2csv.parse(attributes));
                 } else {
-                    await writeFile(outputFile, JSON.stringify(data, null, 2));
+                    await writeFile(outputFile, JSON.stringify(attributes, null, 2));
                 }
             }
         }
     }
 }
 
-getCodeLists.description = `Extract variable data from a Define-XML file.
+GetCodeLists.description = `extract codelists metadata from a Define-XML file.
 A file created using Define-XML 2.0 standard is expected as an input.
-If the output file is not specified, attrs.csv will be used.
+If the output file is not specified, codelists.csv will be used.
 `;
 
-getCodeLists.args = [
+GetCodeLists.args = [
     { name: 'Define-XML 2.0 file' },
     { name: 'Output file' },
 ];
 
-getCodeLists.flags = {
+GetCodeLists.flags = {
     verbose: flags.boolean({ char: 'v', description: 'Show additional information during the execution' }),
     extended: flags.boolean({ char: 'e', description: 'Show extended codelist data' }),
     filter: flags.string({ description: "Regex used to filter the output. Use --filter='^(arm|lbtest|aeout)$' to select ARM, LBTEST, and AEOUT codelists." }),
@@ -85,17 +85,22 @@ getCodeLists.flags = {
     format: flags.string({ char: 'f', description: 'Output format', options: ['csv', 'json'], default: 'csv' }),
 };
 
-function fetchData (odm, flags) {
+function getCodeListData (odm, flags) {
     let codeListList = [];
     if (odm && odm.study && odm.study.metaDataVersion) {
         const mdv = odm.study.metaDataVersion;
         codeListList = Object.values(mdv.codeLists).map((codeList) => {
             if (flags.extended) {
+                let alias;
+                if (codeList.alias) {
+                    alias = codeList.alias.name;
+                }
                 return {
                     name: codeList.name,
-                    label: getDescription(codeList),
                     dataType: codeList.dataType,
                     codeListType: codeList.codeListType,
+                    sasFormatName: codeList.formatName,
+                    alias,
                 };
             } else {
                 return {
@@ -109,4 +114,4 @@ function fetchData (odm, flags) {
     return codeListList;
 }
 
-module.exports = getCodeLists;
+module.exports = GetCodeLists;
