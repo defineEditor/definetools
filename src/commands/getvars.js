@@ -9,9 +9,9 @@ const json2csv = require('json2csv');
 
 const writeFile = promisify(fs.writeFile);
 
-class getVars extends Command {
+class GetVars extends Command {
     async run () {
-        const { flags, argv } = this.parse(getVars);
+        const { flags, argv } = this.parse(GetVars);
 
         // Paths
         const currentFolder = process.cwd();
@@ -21,13 +21,9 @@ class getVars extends Command {
         // Read-in and parse XML
         let xmlData = await readXml(inputFile);
         let odm = parseDefine(xmlData);
-        let attributes = getAttributes(odm, flags);
+        let attributes = getVariableData(odm, flags);
 
         // Handle flags
-        if (flags.verbose) {
-            this.log(`Found metadata for ${Object.keys(attributes).length} datasets.`);
-        }
-
         if (flags.filter) {
             let filter = flags.filter;
             if (/^('.*'|".*")$/.test(filter)) {
@@ -37,7 +33,7 @@ class getVars extends Command {
             try {
                 regexFilter = new RegExp(filter, 'i');
             } catch (error) {
-                this.log(`Invalid filter value. ${error}`);
+                this.error(`Invalid filter value. ${error}`);
             }
 
             Object.keys(attributes).forEach(itemGroupOid => {
@@ -48,6 +44,21 @@ class getVars extends Command {
                 }
             });
         }
+
+        if (flags.verbose) {
+            let numItems = Object.values(attributes).reduce((acc, dataset) => (acc + dataset.length), 0);
+            let message = `Found ${numItems} items.` + (numItems === 0
+                ? (flags.stdout ? `` : ` Nothing to print to ${outputFile}.`)
+                : (flags.stdout ? ` Printing to STDOUT.` : ` Printing to ${flags.separate ? 'individual files' : outputFile}.`)
+            );
+            this.log(message);
+        }
+
+        // Nothing to report
+        if (Object.keys(attributes).length === 0) {
+            return;
+        }
+
         if (flags.stdout) {
             // Unite into one array
             let unitedAttrs = [];
@@ -87,17 +98,17 @@ class getVars extends Command {
     }
 }
 
-getVars.description = `Extract variable attributes from a Define-XML file.
+GetVars.description = `extract variable attributes from a Define-XML file.
 A file created using Define-XML 2.0 standard is expected as an input.
 If the output file is not specified, vars.csv will be used.
 `;
 
-getVars.args = [
+GetVars.args = [
     { name: 'Define-XML 2.0 file', required: true },
     { name: 'Output file' },
 ];
 
-getVars.flags = {
+GetVars.flags = {
     separate: flags.boolean({ char: 's', description: 'Create a separate file for each dataset' }),
     verbose: flags.boolean({ char: 'v', description: 'Show additional information during the execution' }),
     extended: flags.boolean({ char: 'e', description: 'Show an extended list of attributes' }),
@@ -106,7 +117,7 @@ getVars.flags = {
     format: flags.string({ char: 'f', description: 'Output format', options: ['csv', 'json'], default: 'csv' }),
 };
 
-function getAttributes (odm, flags) {
+function getVariableData (odm, flags) {
     let result = {};
     if (odm && odm.study && odm.study.metaDataVersion) {
         const mdv = odm.study.metaDataVersion;
@@ -116,9 +127,21 @@ function getAttributes (odm, flags) {
             itemGroup.itemRefOrder.forEach(itemRefOid => {
                 let itemRef = itemGroup.itemRefs[itemRefOid];
                 let itemDef = mdv.itemDefs[itemRef.itemOid];
+                let comment;
+                if (itemDef.commentOid) {
+                    comment = getDescription(mdv.comments[itemDef.commentOid]);
+                }
+                let method;
+                if (itemRef.methodOid) {
+                    method = getDescription(mdv.methods[itemRef.methodOid]);
+                }
                 let origin;
+                let originDescription;
                 if (itemDef.origins.length > 0) {
-                    origin = getDescription(itemDef.origins[0]);
+                    origin = itemDef.origins[0].type;
+                    if (itemDef.origins[0].descriptions.length > 0) {
+                        originDescription = getDescription(itemDef.origins[0]);
+                    }
                 }
                 if (itemDef.codeListOid) {
                     codelist = mdv.codeLists[itemDef.codeListOid].name;
@@ -136,6 +159,9 @@ function getAttributes (odm, flags) {
                         length: itemDef.length,
                         dataType: itemDef.dataType,
                         origin,
+                        originDescription,
+                        method,
+                        comment,
                         mandatory: itemRef.mandatory,
                         keySequence,
                         role: itemRef.role,
@@ -162,4 +188,4 @@ function getAttributes (odm, flags) {
     return result;
 }
 
-module.exports = getVars;
+module.exports = GetVars;
