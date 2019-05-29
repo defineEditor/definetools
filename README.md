@@ -32,7 +32,7 @@ definetools getvars [options] xmlFile [output file]
   --stdout               Print results to STDOUT
 ```
 ## getdatasets
-Extract daaset attributes from a Define-XML file. See **definetools getdatasets --help** for more details.
+Extract dataset attributes from a Define-XML file. See **definetools getdatasets --help** for more details.
 ```
 definetools getdatasets [options] xmlFile [output file]
 ```
@@ -42,6 +42,34 @@ definetools getdatasets [options] xmlFile [output file]
   -f, --format=csv|json  [default: csv] Output format
   -v, --verbose          Show additional information during the execution
   --filter=filter        Regex used to specify datasets to output. Use --filter='^(ae|cm|lb)$' to select AE, CM, and LB datasets.
+  --stdout               Print results to STDOUT
+```
+## getcodelists
+Extract codelist attributes from a Define-XML file. See **definetools getcodelists --help** for more details.
+```
+definetools getcodelists [options] xmlFile [output file]
+```
+#### Options
+```
+  -e, --extended         Show extended codelist data
+  -f, --format=csv|json  [default: csv] Output format
+  -v, --verbose          Show additional information during the execution
+  --filter=filter        Regex used to filter the output. Use --filter='^(arm|lbtest|aeout)$' to select ARM, LBTEST, and AEOUT codelists.
+  --stdout               Print results to STDOUT
+```
+## getcodes
+Extract code attributes from a Define-XML file. See **definetools getcodes --help** for more details.
+```
+definetools getcodes [options] xmlFile [output file]
+```
+#### Options
+```
+  -e, --extended         Show an extended list of attributes
+  -f, --format=csv|json  [default: csv] Output format
+  -s, --separate         Create a separate file for each codelist
+  -v, --verbose          Show additional information during the execution
+  --filter=filter        Regex used to filter the output. Use --filter='^(arm|lbtest|aeout)$' to select ARM, LBTEST, and AEOUT codelists.
+  --hideExternal         Do not print external codelist information
   --stdout               Print results to STDOUT
 ```
 ### validate

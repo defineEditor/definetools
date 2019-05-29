@@ -16,7 +16,7 @@ class GetCodes extends Command {
         // Paths
         const currentFolder = process.cwd();
         let inputFile = path.resolve(currentFolder, argv[0]);
-        let outputFile = path.resolve(currentFolder, argv.length > 1 ? argv[1] : ('vars.' + flags.format));
+        let outputFile = path.resolve(currentFolder, argv.length > 1 ? argv[1] : ('codes.' + flags.format));
 
         // Read-in and parse XML
         let xmlData = await readXml(inputFile);
@@ -38,7 +38,7 @@ class GetCodes extends Command {
 
             Object.keys(attributes).forEach(codeListOid => {
                 let codeListAttrs = attributes[codeListOid];
-                let codeListName = codeListAttrs[0].dataset.toLowerCase();
+                let codeListName = codeListAttrs[0].codeList.toLowerCase();
                 if (!regexFilter.test(codeListName)) {
                     delete attributes[codeListOid];
                 }
@@ -49,7 +49,7 @@ class GetCodes extends Command {
             let numItems = Object.values(attributes).reduce((acc, items) => (acc + items.length), 0);
             let message = `Found ${numItems} items.` + (numItems === 0
                 ? (flags.stdout ? `` : ` Nothing to print to ${outputFile}.`)
-                : (flags.stdout ? ` Printing to STDOUT.` : ` Printing to ${outputFile}.`)
+                : (flags.stdout ? ` Printing to STDOUT.` : ` Printing to ${flags.separate ? 'individual files' : outputFile}.`)
             );
             this.log(message);
         }
@@ -76,11 +76,11 @@ class GetCodes extends Command {
         if (flags.separate) {
             await Promise.all(Object.keys(attributes).map(async (codeListOid) => {
                 let codeListAttrs = attributes[codeListOid];
-                let codeListName = codeListAttrs[0].dataset.toLowerCase();
+                let codeListName = codeListAttrs[0].codeList.toLowerCase();
                 if (flags.format === 'csv') {
-                    await writeFile(path.resolve(currentFolder, codeListName + '.' + flags.format), json2csv.parse(codeListAttrs));
+                    await writeFile(path.resolve(currentFolder, codeListName.replace(/[\s-/\\]/g, '_') + '.' + flags.format), json2csv.parse(codeListAttrs));
                 } else {
-                    await writeFile(path.resolve(currentFolder, codeListName + '.' + flags.format), JSON.stringify(codeListAttrs, null, 2));
+                    await writeFile(path.resolve(currentFolder, codeListName.replace(/[\s-/\\]/g, '_') + '.' + flags.format), JSON.stringify(codeListAttrs, null, 2));
                 }
             }));
         } else {
@@ -100,7 +100,7 @@ class GetCodes extends Command {
 
 GetCodes.description = `extract variable attributes from a Define-XML file.
 A file created using Define-XML 2.0 standard is expected as an input.
-If the output file is not specified, vars.csv will be used.
+If the output file is not specified, codes.csv will be used.
 `;
 
 GetCodes.args = [
@@ -109,7 +109,7 @@ GetCodes.args = [
 ];
 
 GetCodes.flags = {
-    separate: flags.boolean({ char: 's', description: 'Create a separate file for each dataset' }),
+    separate: flags.boolean({ char: 's', description: 'Create a separate file for each codelist' }),
     verbose: flags.boolean({ char: 'v', description: 'Show additional information during the execution' }),
     extended: flags.boolean({ char: 'e', description: 'Show an extended list of attributes' }),
     filter: flags.string({ description: "Regex used to filter the output. Use --filter='^(arm|lbtest|aeout)$' to select ARM, LBTEST, and AEOUT codelists." }),

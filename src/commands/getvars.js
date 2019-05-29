@@ -49,7 +49,7 @@ class GetVars extends Command {
             let numItems = Object.values(attributes).reduce((acc, dataset) => (acc + dataset.length), 0);
             let message = `Found ${numItems} items.` + (numItems === 0
                 ? (flags.stdout ? `` : ` Nothing to print to ${outputFile}.`)
-                : (flags.stdout ? ` Printing to STDOUT.` : ` Printing to ${outputFile}.`)
+                : (flags.stdout ? ` Printing to STDOUT.` : ` Printing to ${flags.separate ? 'individual files' : outputFile}.`)
             );
             this.log(message);
         }
