@@ -1,3 +1,5 @@
+### v0.2.1
+* Fixed a bug when the filter option could not be used for the getcodes command with Define-XML files containing external codelists
 ### v0.2.0
 * Added getcodelists, getcodes commands
 * Showing additional attributes (e.g., comment, method, etc.) to getvars, getdatasets
