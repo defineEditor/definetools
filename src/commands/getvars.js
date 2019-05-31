@@ -76,7 +76,10 @@ class GetVars extends Command {
         if (flags.separate) {
             await Promise.all(Object.keys(attributes).map(async (itemGroupOid) => {
                 let itemGroupAttrs = attributes[itemGroupOid];
-                let datasetName = itemGroupAttrs[0].dataset.toLowerCase();
+                let datasetName = '';
+                if (itemGroupAttrs.length > 0) {
+                    datasetName = itemGroupAttrs[0].dataset.toLowerCase();
+                }
                 if (flags.format === 'csv') {
                     await writeFile(path.resolve(currentFolder, datasetName + '.' + flags.format), json2csv.parse(itemGroupAttrs));
                 } else {

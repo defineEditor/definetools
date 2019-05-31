@@ -38,7 +38,10 @@ class GetCodes extends Command {
 
             Object.keys(attributes).forEach(codeListOid => {
                 let codeListAttrs = attributes[codeListOid];
-                let codeListName = codeListAttrs[0].codeList.toLowerCase();
+                let codeListName = '';
+                if (codeListAttrs.length > 0) {
+                    codeListName = (codeListAttrs[0].codeList || codeListAttrs[0].dictionary).toLowerCase();
+                }
                 if (!regexFilter.test(codeListName)) {
                     delete attributes[codeListOid];
                 }
