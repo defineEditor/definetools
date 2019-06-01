@@ -5,7 +5,8 @@ const { getDescription } = require('../utils/defineStructureUtils.js');
 const path = require('path');
 const fs = require('fs');
 const { promisify } = require('util');
-const json2csv = require('json2csv');
+const convertToFormat = require('../utils/convertToFormat.js');
+const flagChecks = require('../utils/flagChecks.js');
 
 const writeFile = promisify(fs.writeFile);
 
@@ -24,6 +25,7 @@ class GetVars extends Command {
         let attributes = getVariableData(odm, flags);
 
         // Handle flags
+        flagChecks(flags, this.error);
         if (flags.filter) {
             let filter = flags.filter;
             if (/^('.*'|".*")$/.test(filter)) {
@@ -65,12 +67,7 @@ class GetVars extends Command {
             Object.keys(attributes).forEach(itemGroupOid => {
                 unitedAttrs = unitedAttrs.concat(attributes[itemGroupOid]);
             });
-            if (flags.format === 'csv') {
-                this.log(json2csv.parse(unitedAttrs));
-            } else {
-                this.log(JSON.stringify(unitedAttrs, null, 2));
-            }
-
+            this.log(convertToFormat(unitedAttrs, flags.format));
             return;
         }
         if (flags.separate) {
@@ -80,11 +77,7 @@ class GetVars extends Command {
                 if (itemGroupAttrs.length > 0) {
                     datasetName = itemGroupAttrs[0].dataset.toLowerCase();
                 }
-                if (flags.format === 'csv') {
-                    await writeFile(path.resolve(currentFolder, datasetName + '.' + flags.format), json2csv.parse(itemGroupAttrs));
-                } else {
-                    await writeFile(path.resolve(currentFolder, datasetName + '.' + flags.format), JSON.stringify(itemGroupAttrs, null, 2));
-                }
+                await writeFile(path.resolve(currentFolder, datasetName + '.' + flags.format), convertToFormat(itemGroupAttrs, flags.format));
             }));
         } else {
             // Unite into one array
@@ -92,11 +85,7 @@ class GetVars extends Command {
             Object.keys(attributes).forEach(itemGroupOid => {
                 unitedAttrs = unitedAttrs.concat(attributes[itemGroupOid]);
             });
-            if (flags.format === 'csv') {
-                await writeFile(outputFile, json2csv.parse(unitedAttrs));
-            } else {
-                await writeFile(outputFile, JSON.stringify(unitedAttrs, null, 2));
-            }
+            await writeFile(outputFile, await convertToFormat(unitedAttrs, flags.format));
         }
     }
 }
@@ -117,7 +106,7 @@ GetVars.flags = {
     extended: flags.boolean({ char: 'e', description: 'Show an extended list of attributes' }),
     filter: flags.string({ description: "Regex used to specify datasets to output. Use --filter='^(ae|cm|lb)$' to select AE, CM, and LB datasets." }),
     stdout: flags.boolean({ description: 'Print results to STDOUT', exclusive: ['separate'] }),
-    format: flags.string({ char: 'f', description: 'Output format', options: ['csv', 'json'], default: 'csv' }),
+    format: flags.string({ char: 'f', description: 'Output format', options: ['csv', 'json', 'xlsx'], default: 'csv' }),
 };
 
 function getVariableData (odm, flags) {

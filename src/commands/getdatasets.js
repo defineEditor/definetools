@@ -5,7 +5,8 @@ const { getDescription } = require('../utils/defineStructureUtils.js');
 const path = require('path');
 const fs = require('fs');
 const { promisify } = require('util');
-const json2csv = require('json2csv');
+const convertToFormat = require('../utils/convertToFormat.js');
+const flagChecks = require('../utils/flagChecks.js');
 
 const writeFile = promisify(fs.writeFile);
 
@@ -24,6 +25,7 @@ class GetDatasets extends Command {
         let attributes = getDatasetData(odm, flags);
 
         // Handle flags
+        flagChecks(flags, this.error);
         if (flags.filter) {
             let filter = flags.filter;
             if (/^('.*'|".*")$/.test(filter)) {
@@ -60,17 +62,9 @@ class GetDatasets extends Command {
         }
 
         if (flags.stdout) {
-            if (flags.format === 'csv') {
-                this.log(json2csv.parse(attributes));
-            } else {
-                this.log(JSON.stringify(attributes, null, 2));
-            }
+            this.log(convertToFormat(attributes, flags.format));
         } else {
-            if (flags.format === 'csv') {
-                await writeFile(outputFile, json2csv.parse(attributes));
-            } else {
-                await writeFile(outputFile, JSON.stringify(attributes, null, 2));
-            }
+            await writeFile(outputFile, convertToFormat(attributes, flags.format));
         }
     }
 }
@@ -90,7 +84,7 @@ GetDatasets.flags = {
     extended: flags.boolean({ char: 'e', description: 'Show an extended list of attributes' }),
     filter: flags.string({ description: "Regex used to specify datasets to output. Use --filter='^(ae|cm|lb)$' to select AE, CM, and LB datasets." }),
     stdout: flags.boolean({ description: 'Print results to STDOUT' }),
-    format: flags.string({ char: 'f', description: 'Output format', options: ['csv', 'json'], default: 'csv' }),
+    format: flags.string({ char: 'f', description: 'Output format', options: ['csv', 'json', 'xlsx'], default: 'csv' }),
 };
 
 function getDatasetData (odm, flags) {

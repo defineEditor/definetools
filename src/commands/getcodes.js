@@ -5,7 +5,8 @@ const { getDecode } = require('../utils/defineStructureUtils.js');
 const path = require('path');
 const fs = require('fs');
 const { promisify } = require('util');
-const json2csv = require('json2csv');
+const convertToFormat = require('../utils/convertToFormat.js');
+const flagChecks = require('../utils/flagChecks.js');
 
 const writeFile = promisify(fs.writeFile);
 
@@ -24,6 +25,7 @@ class GetCodes extends Command {
         let attributes = getCodesData(odm, flags);
 
         // Handle flags
+        flagChecks(flags, this.error);
         if (flags.filter) {
             let filter = flags.filter;
             if (/^('.*'|".*")$/.test(filter)) {
@@ -40,7 +42,7 @@ class GetCodes extends Command {
                 let codeListAttrs = attributes[codeListOid];
                 let codeListName = '';
                 if (codeListAttrs.length > 0) {
-                    codeListName = (codeListAttrs[0].codeList || codeListAttrs[0].dictionary).toLowerCase();
+                    codeListName = codeListAttrs[0].codeList.toLowerCase();
                 }
                 if (!regexFilter.test(codeListName)) {
                     delete attributes[codeListOid];
@@ -68,23 +70,17 @@ class GetCodes extends Command {
             Object.keys(attributes).forEach(codeListOid => {
                 unitedAttrs = unitedAttrs.concat(attributes[codeListOid]);
             });
-            if (flags.format === 'csv') {
-                this.log(json2csv.parse(unitedAttrs));
-            } else {
-                this.log(JSON.stringify(unitedAttrs, null, 2));
-            }
-
+            this.log(convertToFormat(unitedAttrs, flags.format));
             return;
         }
         if (flags.separate) {
             await Promise.all(Object.keys(attributes).map(async (codeListOid) => {
                 let codeListAttrs = attributes[codeListOid];
                 let codeListName = codeListAttrs[0].codeList.toLowerCase();
-                if (flags.format === 'csv') {
-                    await writeFile(path.resolve(currentFolder, codeListName.replace(/[\s-/\\]/g, '_') + '.' + flags.format), json2csv.parse(codeListAttrs));
-                } else {
-                    await writeFile(path.resolve(currentFolder, codeListName.replace(/[\s-/\\]/g, '_') + '.' + flags.format), JSON.stringify(codeListAttrs, null, 2));
-                }
+                await writeFile(
+                    path.resolve(currentFolder, codeListName.replace(/[\s-/\\]/g, '_') + '.' + flags.format)
+                    , convertToFormat(codeListAttrs, flags.format)
+                );
             }));
         } else {
             // Unite into one array
@@ -92,11 +88,7 @@ class GetCodes extends Command {
             Object.keys(attributes).forEach(codeListOid => {
                 unitedAttrs = unitedAttrs.concat(attributes[codeListOid]);
             });
-            if (flags.format === 'csv') {
-                await writeFile(outputFile, json2csv.parse(unitedAttrs));
-            } else {
-                await writeFile(outputFile, JSON.stringify(unitedAttrs, null, 2));
-            }
+            await writeFile(outputFile, convertToFormat(unitedAttrs, flags.format));
         }
     }
 }
@@ -117,8 +109,9 @@ GetCodes.flags = {
     extended: flags.boolean({ char: 'e', description: 'Show an extended list of attributes' }),
     filter: flags.string({ description: "Regex used to filter the output. Use --filter='^(arm|lbtest|aeout)$' to select ARM, LBTEST, and AEOUT codelists." }),
     stdout: flags.boolean({ description: 'Print results to STDOUT', exclusive: ['separate'] }),
-    format: flags.string({ char: 'f', description: 'Output format', options: ['csv', 'json'], default: 'csv' }),
-    hideExternal: flags.boolean({ description: 'Do not print external codelist information' }),
+    format: flags.string({ char: 'f', description: 'Output format', options: ['csv', 'json', 'xlsx'], default: 'csv' }),
+    hideExternal: flags.boolean({ description: 'Do not print external codelist information', exclusive: ['onlyExternal'] }),
+    onlyExternal: flags.boolean({ description: 'Print only external codelist information', exclusive: ['hideExternal'] }),
 };
 
 function getCodesData (odm, flags) {
@@ -133,7 +126,7 @@ function getCodesData (odm, flags) {
             } else if (codeList.codeListType === 'decoded') {
                 codes = codeList.codeListItems;
             }
-            if (codes) {
+            if (codes && !flags.onlyExternal) {
                 Object.values(codes).forEach(code => {
                     let decode;
                     if (codeList.codeListType === 'decoded') {
@@ -144,11 +137,15 @@ function getCodesData (odm, flags) {
                         if (codeList.alias) {
                             alias = codeList.alias.name;
                         }
+                        let rank;
+                        if (code.rank !== undefined) {
+                            rank = parseInt(code.rank);
+                        }
                         cdlAttributes.push({
                             codeList: codeList.name,
                             codedValue: code.codedValue,
                             decode,
-                            rank: parseInt(code.rank),
+                            rank,
                             alias,
                             extendedValue: code.extendedValue,
                         });
@@ -162,7 +159,10 @@ function getCodesData (odm, flags) {
                 });
             }
             if (codeList.codeListType === 'external' && !flags.hideExternal) {
-                cdlAttributes.push({ ...codeList.externalCodeList });
+                cdlAttributes.push({
+                    codeList: codeList.name,
+                    ...codeList.externalCodeList
+                });
             }
             result[codeList.oid] = cdlAttributes;
         });

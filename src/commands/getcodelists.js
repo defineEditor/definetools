@@ -4,7 +4,8 @@ const readXml = require('../utils/readXml.js');
 const path = require('path');
 const fs = require('fs');
 const { promisify } = require('util');
-const json2csv = require('json2csv');
+const convertToFormat = require('../utils/convertToFormat.js');
+const flagChecks = require('../utils/flagChecks.js');
 
 const writeFile = promisify(fs.writeFile);
 
@@ -23,6 +24,7 @@ class GetCodeLists extends Command {
         let attributes = getCodeListData(odm, flags);
 
         // Handle filter
+        flagChecks(flags, this.error);
         if (flags.filter) {
             let filter = flags.filter;
             if (/^('.*'|".*")$/.test(filter)) {
@@ -51,17 +53,9 @@ class GetCodeLists extends Command {
         // report
         if (attributes.length > 0) {
             if (flags.stdout) {
-                if (flags.format === 'csv') {
-                    this.log(json2csv.parse(attributes));
-                } else {
-                    this.log(JSON.stringify(attributes, null, 2));
-                }
+                this.log(convertToFormat(attributes, flags.format));
             } else {
-                if (flags.format === 'csv') {
-                    await writeFile(outputFile, json2csv.parse(attributes));
-                } else {
-                    await writeFile(outputFile, JSON.stringify(attributes, null, 2));
-                }
+                await writeFile(outputFile, convertToFormat(attributes, flags.format));
             }
         }
     }
@@ -82,7 +76,7 @@ GetCodeLists.flags = {
     extended: flags.boolean({ char: 'e', description: 'Show extended codelist data' }),
     filter: flags.string({ description: "Regex used to filter the output. Use --filter='^(arm|lbtest|aeout)$' to select ARM, LBTEST, and AEOUT codelists." }),
     stdout: flags.boolean({ description: 'Print results to STDOUT' }),
-    format: flags.string({ char: 'f', description: 'Output format', options: ['csv', 'json'], default: 'csv' }),
+    format: flags.string({ char: 'f', description: 'Output format', options: ['csv', 'json', 'xlsx'], default: 'csv' }),
 };
 
 function getCodeListData (odm, flags) {
