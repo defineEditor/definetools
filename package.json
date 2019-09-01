@@ -25,6 +25,7 @@
     "@oclif/plugin-autocomplete": "^0.1.0",
     "@oclif/plugin-help": "^2",
     "@oclif/plugin-not-found": "^1.2.2",
+    "claWrapper": "../cdisclibraryjs/",
     "json2csv": "^4.5.1",
     "libxmljs2": "^0.21.2",
     "xlsx": "^0.14.3",

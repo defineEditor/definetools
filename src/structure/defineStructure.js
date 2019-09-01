@@ -395,7 +395,6 @@ class CodeListItem extends EnumeratedItem {
     constructor ({
         codedValue,
         rank,
-        orderNumber,
         extendedValue,
         alias,
         decodes = []
@@ -403,7 +402,6 @@ class CodeListItem extends EnumeratedItem {
         super({
             codedValue: codedValue,
             rank: rank,
-            orderNumber: orderNumber,
             extendedValue: extendedValue,
             alias: alias
         });

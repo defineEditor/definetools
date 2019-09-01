@@ -1,2 +1,4 @@
 *.xsd binary
 *.xsl binary
+* linguist-vendored
+*.js linguist-vendored=false
