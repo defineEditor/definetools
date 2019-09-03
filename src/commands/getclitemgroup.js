@@ -45,9 +45,9 @@ class GetClItemGroup extends Command {
         let cl = new CdiscLibrary({ username: config.cdiscLibrary.username, password: config.cdiscLibrary.password });
 
         if (flags.list) {
-            output = await cl.getItemGroups(flags.product, { short: true, outputFormat: flags.format });
-        } else if (flags.list) {
-            output = await cl.getItemGroups(flags.product, { outputFormat: flags.format });
+            output = await cl.getItemGroups(flags.product, { short: true, format: flags.format });
+        } else if (flags.all) {
+            output = await cl.getItemGroups(flags.product, { format: flags.format });
         } else {
             let rawDataset = await cl.getItemGroup(datasetName, flags.product);
             output = rawDataset.getFormattedItems(flags.format);
