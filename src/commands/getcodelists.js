@@ -4,6 +4,7 @@ const readXml = require('../utils/readXml.js');
 const path = require('path');
 const fs = require('fs');
 const { promisify } = require('util');
+const chalk = require('chalk');
 const convertToFormat = require('../utils/convertToFormat.js');
 const flagChecks = require('../utils/flagChecks.js');
 
@@ -34,7 +35,7 @@ class GetCodeLists extends Command {
             try {
                 regexFilter = new RegExp(filter, 'i');
             } catch (error) {
-                this.log(`Invalid filter value. ${error}`);
+                this.error(`Invalid filter value. ${error}`);
             }
 
             attributes = attributes.filter(item => regexFilter.test(item.name));
@@ -43,11 +44,11 @@ class GetCodeLists extends Command {
         // put log message
         if (flags.verbose) {
             let numItems = Object.values(attributes).reduce((acc, items) => (acc + items.length), 0);
-            let message = `Found ${numItems} items.` + (numItems === 0
+            let message = `Found ${chalk.bold(numItems)} items.` + (numItems === 0
                 ? (flags.stdout ? `` : ` Nothing to print to ${outputFile}.`)
                 : (flags.stdout ? ` Printing to STDOUT.` : ` Printing to ${outputFile}.`)
             );
-            this.log(message);
+            this.log(chalk.blue(message));
         }
 
         // report

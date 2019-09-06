@@ -10,21 +10,13 @@ const flagChecks = require('../utils/flagChecks.js');
 const writeFile = promisify(fs.writeFile);
 const readFile = promisify(fs.readFile);
 
-class GetClItemGroup extends Command {
+class ListClProducts extends Command {
     async run () {
-        const { flags, argv } = this.parse(GetClItemGroup);
+        const { flags, argv } = this.parse(ListClProducts);
 
         // Paths
         const currentFolder = process.cwd();
-        let datasetName = argv[0];
-        let outputFile;
-        if (flags.list) {
-            outputFile = path.resolve(currentFolder, argv.length > 1 ? argv[1] : (flags.product + '-datasets.' + flags.format));
-        } else if (flags.all) {
-            outputFile = path.resolve(currentFolder, argv.length > 1 ? argv[1] : (flags.product + '-all.' + flags.format));
-        } else {
-            outputFile = path.resolve(currentFolder, argv.length > 1 ? argv[1] : (flags.product + '-' + datasetName + '.' + flags.format));
-        }
+        let outputFile = path.resolve(currentFolder, argv.length > 0 ? argv[0] : ('products.' + flags.format));
 
         // Handle flags
         flagChecks(flags, this.error);
@@ -45,18 +37,11 @@ class GetClItemGroup extends Command {
         }
         let cl = new CdiscLibrary({ username: config.cdiscLibrary.username, password: config.cdiscLibrary.password });
 
-        if (flags.list) {
-            output = await cl.getItemGroups(flags.product, { short: true, format: flags.format });
-        } else if (flags.all) {
-            output = await cl.getItemGroups(flags.product, { format: flags.format });
-        } else {
-            let rawDataset = await cl.getItemGroup(datasetName, flags.product);
-            output = rawDataset.getFormattedItems(flags.format);
-        }
+        output = await cl.getProductDetails({ type: flags.long ? 'long' : 'short', format: flags.format });
 
         if (flags.verbose) {
             let message = chalk.blue('Traffic used: ' + chalk.bold(cl.getTraffic()));
-            this.log(message);
+            this.log(chalk.blue(message));
         }
 
         // Nothing to report
@@ -72,22 +57,19 @@ class GetClItemGroup extends Command {
     }
 }
 
-GetClItemGroup.description = `get a dataset/domain/dataStructure for a specific product from the CDISC API Library.
-If the output file is not specified, [product]-[dataset].csv will be used.
+ListClProducts.description = `get a list of Products from the CDISC API Library.
+If the output file is not specified, products.csv will be used.
 `;
 
-GetClItemGroup.args = [
-    { name: 'Dataset' },
+ListClProducts.args = [
     { name: 'Output file' },
 ];
 
-GetClItemGroup.flags = {
-    product: flags.string({ char: 'p', required: true, description: 'Product name. For example: sdtmig-3-3, adam-1-1, cdashig-2-0' }),
+ListClProducts.flags = {
     verbose: flags.boolean({ char: 'v', description: 'Show additional information during the execution' }),
-    list: flags.boolean({ char: 'l', description: 'List all datasets for that product' }),
     stdout: flags.boolean({ description: 'Print results to STDOUT' }),
     format: flags.string({ char: 'f', description: 'Output format', options: ['csv', 'json'], default: 'csv' }),
-    all: flags.boolean({ char: 'a', description: 'Get all datasets' }),
+    long: flags.string({ char: 'l', description: 'Use long listing output' }),
 };
 
-module.exports = GetClItemGroup;
+module.exports = ListClProducts;

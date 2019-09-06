@@ -2,6 +2,7 @@ const { Command, flags } = require('@oclif/command');
 const path = require('path');
 const fs = require('fs');
 const { promisify } = require('util');
+const chalk = require('chalk');
 const libxmljs = require('libxmljs2');
 const json2csv = require('json2csv');
 
@@ -22,9 +23,9 @@ class Validate extends Command {
         // If there were no erros, exit the validation
         if (flags.verbose) {
             if (result.valid) {
-                this.log('Schema validation passed.');
+                this.log(chalk.green('Schema validation passed.'));
             } else {
-                this.log(`Issues found during the validation. Number of issues: ${result.details.length}`);
+                this.log(chalk.yellow(`Issues found during the validation. Number of issues: ${result.details.length}`));
             }
         }
         if (result.valid) {

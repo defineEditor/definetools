@@ -5,6 +5,7 @@ const { getDescription } = require('../utils/defineStructureUtils.js');
 const path = require('path');
 const fs = require('fs');
 const { promisify } = require('util');
+const chalk = require('chalk');
 const convertToFormat = require('../utils/convertToFormat.js');
 const flagChecks = require('../utils/flagChecks.js');
 
@@ -49,11 +50,11 @@ class GetVars extends Command {
 
         if (flags.verbose) {
             let numItems = Object.values(attributes).reduce((acc, dataset) => (acc + dataset.length), 0);
-            let message = `Found ${numItems} items.` + (numItems === 0
+            let message = `Found ${chalk.bold(numItems)} items.` + (numItems === 0
                 ? (flags.stdout ? `` : ` Nothing to print to ${outputFile}.`)
                 : (flags.stdout ? ` Printing to STDOUT.` : ` Printing to ${flags.separate ? 'individual files' : outputFile}.`)
             );
-            this.log(message);
+            this.log(chalk.blue(message));
         }
 
         // Nothing to report
