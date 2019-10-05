@@ -3,7 +3,7 @@ const path = require('path');
 const fs = require('fs');
 const { promisify } = require('util');
 const chalk = require('chalk');
-const libxmljs = require('libxmljs2');
+const libxmljs = require('libxmljs');
 const json2csv = require('json2csv');
 
 const writeFile = promisify(fs.writeFile);

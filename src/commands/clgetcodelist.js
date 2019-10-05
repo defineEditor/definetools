@@ -2,7 +2,7 @@ const { Command, flags } = require('@oclif/command');
 const path = require('path');
 const fs = require('fs');
 const os = require('os');
-const { CdiscLibrary } = require('claWrapper');
+const { CdiscLibrary } = require('cla-wrapper');
 const { promisify } = require('util');
 const chalk = require('chalk');
 const flagChecks = require('../utils/flagChecks.js');
@@ -10,20 +10,18 @@ const flagChecks = require('../utils/flagChecks.js');
 const writeFile = promisify(fs.writeFile);
 const readFile = promisify(fs.readFile);
 
-class GetClItemGroup extends Command {
+class ClGetCodelist extends Command {
     async run () {
-        const { flags, argv } = this.parse(GetClItemGroup);
+        const { flags, argv } = this.parse(ClGetCodelist);
 
         // Paths
         const currentFolder = process.cwd();
-        let datasetName = argv[0];
+        let codelistId = argv[0];
         let outputFile;
         if (flags.list) {
-            outputFile = path.resolve(currentFolder, argv.length > 1 ? argv[1] : (flags.product + '-datasets.' + flags.format));
-        } else if (flags.all) {
-            outputFile = path.resolve(currentFolder, argv.length > 1 ? argv[1] : (flags.product + '-all.' + flags.format));
+            outputFile = path.resolve(currentFolder, argv.length > 1 ? argv[1] : (flags.product + '-codelists.' + flags.format));
         } else {
-            outputFile = path.resolve(currentFolder, argv.length > 1 ? argv[1] : (flags.product + '-' + datasetName + '.' + flags.format));
+            outputFile = path.resolve(currentFolder, argv.length > 1 ? argv[1] : (flags.product + '-' + codelistId + '.' + flags.format));
         }
 
         // Handle flags
@@ -45,17 +43,29 @@ class GetClItemGroup extends Command {
         }
         let cl = new CdiscLibrary({ username: config.cdiscLibrary.username, password: config.cdiscLibrary.password });
 
-        if (flags.list) {
-            output = await cl.getItemGroups(flags.product, { short: true, format: flags.format });
-        } else if (flags.all) {
-            output = await cl.getItemGroups(flags.product, { format: flags.format });
+        // Get the terminology high-level object
+        let ct;
+        let pcs = await cl.getProductClasses();
+        let ctId = pcs.terminology.productGroups.packages.getProductNameByAlias(flags.product);
+        if (ctId) {
+            ct = pcs.terminology.productGroups.packages.products[ctId];
         } else {
-            let rawDataset = await cl.getItemGroup(datasetName, flags.product);
-            output = rawDataset.getFormattedItems(flags.format);
+            this.error(`CT ${flags.product} could not be found`);
+            return;
+        }
+
+        if (!ct) {
+            this.error(`Codelist ${flags.codelistId} could not be found`);
+        }
+
+        if (flags.list) {
+            output = await ct.getCodeListList({ short: true, format: flags.format });
+        } else {
+            output = await ct.getCodeList(codelistId, { format: flags.format });
         }
 
         if (flags.verbose) {
-            let message = chalk.blue('Traffic used: ' + chalk.bold(cl.getTraffic()));
+            let message = chalk.blue('Traffic used: ' + chalk.bold(cl.getTrafficStats()));
             this.log(message);
         }
 
@@ -72,22 +82,21 @@ class GetClItemGroup extends Command {
     }
 }
 
-GetClItemGroup.description = `get a dataset/domain/dataStructure for a specific product from the CDISC API Library.
-If the output file is not specified, [product]-[dataset].csv will be used.
+ClGetCodelist.description = `get a codelist for a specific product from the CDISC Library.
+If the output file is not specified, [codelistId].csv will be used.
 `;
 
-GetClItemGroup.args = [
-    { name: 'Dataset' },
+ClGetCodelist.args = [
+    { name: 'CodelistID' },
     { name: 'Output file' },
 ];
 
-GetClItemGroup.flags = {
-    product: flags.string({ char: 'p', required: true, description: 'Product name. For example: sdtmig-3-3, adam-1-1, cdashig-2-0' }),
+ClGetCodelist.flags = {
+    product: flags.string({ char: 'p', required: true, description: 'Terminology name and version. For example: adamct-2014-09-26, sdtmct20180330' }),
     verbose: flags.boolean({ char: 'v', description: 'Show additional information during the execution' }),
-    list: flags.boolean({ char: 'l', description: 'List all datasets for that product' }),
+    list: flags.boolean({ char: 'l', description: 'List all codelists for that product' }),
     stdout: flags.boolean({ description: 'Print results to STDOUT' }),
     format: flags.string({ char: 'f', description: 'Output format', options: ['csv', 'json'], default: 'csv' }),
-    all: flags.boolean({ char: 'a', description: 'Get all datasets' }),
 };
 
-module.exports = GetClItemGroup;
+module.exports = ClGetCodelist;

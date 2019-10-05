@@ -2,7 +2,7 @@ const { Command, flags } = require('@oclif/command');
 const path = require('path');
 const fs = require('fs');
 const os = require('os');
-const { CdiscLibrary } = require('claWrapper');
+const { CdiscLibrary } = require('cla-wrapper');
 const { promisify } = require('util');
 const chalk = require('chalk');
 const flagChecks = require('../utils/flagChecks.js');
@@ -37,10 +37,15 @@ class ListClProducts extends Command {
         }
         let cl = new CdiscLibrary({ username: config.cdiscLibrary.username, password: config.cdiscLibrary.password });
 
-        output = await cl.getProductDetails({ type: flags.long ? 'long' : 'short', format: flags.format });
+        if (flags.long) {
+            output = await cl.getProductDetails({ type: flags.long ? 'long' : 'short', format: flags.format });
+        } else {
+            let products = await cl.getProductList();
+            output = products.join('\n');
+        }
 
         if (flags.verbose) {
-            let message = chalk.blue('Traffic used: ' + chalk.bold(cl.getTraffic()));
+            let message = chalk.blue('Traffic used: ' + chalk.bold(cl.getTrafficStats()));
             this.log(chalk.blue(message));
         }
 
@@ -69,7 +74,7 @@ ListClProducts.flags = {
     verbose: flags.boolean({ char: 'v', description: 'Show additional information during the execution' }),
     stdout: flags.boolean({ description: 'Print results to STDOUT' }),
     format: flags.string({ char: 'f', description: 'Output format', options: ['csv', 'json'], default: 'csv' }),
-    long: flags.string({ char: 'l', description: 'Use long listing output' }),
+    long: flags.boolean({ char: 'l', description: 'Use long listing output' }),
 };
 
 module.exports = ListClProducts;
