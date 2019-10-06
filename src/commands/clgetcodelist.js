@@ -6,6 +6,7 @@ const { CdiscLibrary } = require('cla-wrapper');
 const { promisify } = require('util');
 const chalk = require('chalk');
 const flagChecks = require('../utils/flagChecks.js');
+const convertToFormat = require('../utils/convertToFormat.js');
 
 const writeFile = promisify(fs.writeFile);
 const readFile = promisify(fs.readFile);
@@ -26,6 +27,7 @@ class ClGetCodelist extends Command {
 
         // Handle flags
         flagChecks(flags, this.error);
+
         let output;
         // Get credentials
         let config;
@@ -45,10 +47,9 @@ class ClGetCodelist extends Command {
 
         // Get the terminology high-level object
         let ct;
-        let pcs = await cl.getProductClasses();
-        let ctId = pcs.terminology.productGroups.packages.getProductNameByAlias(flags.product);
-        if (ctId) {
-            ct = pcs.terminology.productGroups.packages.products[ctId];
+        let ctIdObj = await cl.getProductIdByAlias(flags.product);
+        if (ctIdObj) {
+            ct = await cl.getFullProduct(flags.product, true);
         } else {
             this.error(`CT ${flags.product} could not be found`);
             return;
@@ -58,10 +59,20 @@ class ClGetCodelist extends Command {
             this.error(`Codelist ${flags.codelistId} could not be found`);
         }
 
+        let rawOutput;
         if (flags.list) {
-            output = await ct.getCodeListList({ short: true, format: flags.format });
+            rawOutput = await ct.getCodeListList({ short: true });
         } else {
-            output = await ct.getCodeList(codelistId, { format: flags.format });
+            let codelist = await ct.getCodeList(codelistId);
+            if (codelist !== undefined) {
+                rawOutput = codelist.toSimpleObject();
+            }
+        }
+
+        if (rawOutput === undefined || (Array.isArray(rawOutput) && rawOutput.length === 0)) {
+            this.error('Could not load or find the data.');
+        } else {
+            output = convertToFormat(rawOutput, flags.format);
         }
 
         if (flags.verbose) {

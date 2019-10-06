@@ -6,6 +6,7 @@ const { CdiscLibrary } = require('cla-wrapper');
 const { promisify } = require('util');
 const chalk = require('chalk');
 const flagChecks = require('../utils/flagChecks.js');
+const convertToFormat = require('../utils/convertToFormat.js');
 
 const writeFile = promisify(fs.writeFile);
 const readFile = promisify(fs.readFile);
@@ -20,6 +21,7 @@ class ListClProducts extends Command {
 
         // Handle flags
         flagChecks(flags, this.error);
+
         let output;
         // Get credentials
         let config;
@@ -38,7 +40,8 @@ class ListClProducts extends Command {
         let cl = new CdiscLibrary({ username: config.cdiscLibrary.username, password: config.cdiscLibrary.password });
 
         if (flags.long) {
-            output = await cl.getProductDetails({ type: flags.long ? 'long' : 'short', format: flags.format });
+            output = await cl.getProductDetails({ type: flags.long ? 'long' : 'short' });
+            output = convertToFormat(output, flags.format);
         } else {
             let products = await cl.getProductList();
             output = products.join('\n');

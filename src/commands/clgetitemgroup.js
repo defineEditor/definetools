@@ -6,6 +6,7 @@ const { CdiscLibrary } = require('cla-wrapper');
 const { promisify } = require('util');
 const chalk = require('chalk');
 const flagChecks = require('../utils/flagChecks.js');
+const convertToFormat = require('../utils/convertToFormat.js');
 
 const writeFile = promisify(fs.writeFile);
 const readFile = promisify(fs.readFile);
@@ -28,6 +29,7 @@ class ClGetItemGroup extends Command {
 
         // Handle flags
         flagChecks(flags, this.error);
+
         let output;
         // Get credentials
         let config;
@@ -45,13 +47,19 @@ class ClGetItemGroup extends Command {
         }
         let cl = new CdiscLibrary({ username: config.cdiscLibrary.username, password: config.cdiscLibrary.password });
 
+        let rawOutput;
         if (flags.list) {
-            output = await cl.getItemGroups(flags.product, { short: true, format: flags.format });
+            rawOutput = await cl.getItemGroups(flags.product, { type: 'short' });
         } else if (flags.all) {
-            output = await cl.getItemGroups(flags.product, { format: flags.format });
+            rawOutput = await cl.getItemGroups(flags.product);
         } else {
             let rawDataset = await cl.getItemGroup(datasetName, flags.product);
-            output = rawDataset.getFormattedItems(flags.format);
+            rawOutput = rawDataset.getFormattedItems();
+        }
+        if (rawOutput === undefined || (Array.isArray(rawOutput) && rawOutput.length === 0)) {
+            this.error('Could not load or find the data.');
+        } else {
+            output = convertToFormat(rawOutput, flags.format);
         }
 
         if (flags.verbose) {
